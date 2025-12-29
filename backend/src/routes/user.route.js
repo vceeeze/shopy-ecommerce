@@ -9,8 +9,8 @@ router.use(protectRoute)
 // address route endpoint
 router.post("/addresses",  addAddress)
 router.get("/addresses", getAddresses)
-router.put("/adresses/:addressId", updateAddress);
-router.delete("addresses/:addressId", deleteAddress)
+router.put("/addresses/:addressId", updateAddress);
+router.delete("/addresses/:addressId", deleteAddress)
 
 //wishlist routes
 
