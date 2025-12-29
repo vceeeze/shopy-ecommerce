@@ -1,4 +1,5 @@
 import { User } from "../models/user.model.js";
+import { Product } from "../models/product.model.js";
 
 export async function addAddress(req, res) {
   try {
@@ -107,6 +108,12 @@ export async function addToWishlist(req, res) {
     const { productId } = req.body;
     const user = req.user;
 
+  // Verify product exists
+      const product = await Product.findById(productId);
+        if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+   }
+
     // check if product is already in the wishlist
     if (user.wishlist.includes(productId)) {
       return res.status(400).json({ error: "Product already in wishlist" });
@@ -145,8 +152,8 @@ export async function removeFromWishlist(req, res) {
 export async function getWishlist(req, res) {
   try {
     // using populate, bc wishlist is just an array of product ids
-    // const user = await User.findById(req.user._id).populate("wishlist");
-    const user = req.user
+    const user = await User.findById(req.user._id).populate("wishlist");
+   
 
     res.status(200).json({ wishlist: user.wishlist });
   } catch (error) {
