@@ -2,7 +2,7 @@ import { Order } from "../models/order.model.js";
 import { Product } from "../models/product.model.js";
 import { Review } from "../models/review.model.js";
 
-export async function createOrder(res,req){
+export async function createOrder(req, res){
     try {
         const user = req.user;
         const {orderItems, shippingAddress, paymentResult, totalPrice} = req.body;
@@ -17,8 +17,8 @@ export async function createOrder(res,req){
             if(!product){
                 return res.status(404).json({error: `Product ${item.name} not found`});
             }
-            if(product.stock < item.quality) {
-                return res.status(404).json({error: `Insufficient stock for ${product.name}`})
+            if(product.stock < item.quantity) {
+                return res.status(400).json({error: `Insufficient stock for ${product.name}`})
             }
         }
 
@@ -35,7 +35,7 @@ export async function createOrder(res,req){
         // update product stock
         for (const item of orderItems) {
             await Product.findByIdAndUpdate(item.product._id, {
-                $inc: { stock: -item.quality},
+                $inc: { stock: -item.quantity},
             });
         }
             res.status(201).json({message: "Order created successfully", order})
@@ -53,15 +53,14 @@ export async function getUserOrders(req,res) {
 
             // check if each order has been reviewed
 
-            const ordersWithReviewStatus = await Promise.all(
-                orders.map(async (order) => {
-                    const review = await Review.findOne({orderId: order._id});
-                    return {
-                        ...order.toObject(),
-                        hasReviewed: !!review,
-                    }
-                })
-            )
+            const orderIds = orders.map(order => order._id);
+            const reviews = await Review.find({orderId: {$in: orderIds}});
+            const reviewedOrderIds = new Set(reviews.map(r => r.orderId.toString()));
+
+           const ordersWithReviewStatus = orders.map(order => ({
+              ...order.toObject(),
+                hasReviewed: reviewedOrderIds.has(order._id.toString()),
+            }));
 
             res.status(200).json({orders: ordersWithReviewStatus})
     } catch (error) {
