@@ -1,5 +1,5 @@
-import { Cart } from "../models/cart.model";
-import { Product } from "../models/product.model";
+import { Cart } from "../models/cart.model.js";
+import { Product } from "../models/product.model.js";
 
 export async function getCart(req,res){
     try {
@@ -41,6 +41,9 @@ export async function addToCart(req,res) {
         let cart = await Cart.findOne({clerkId: req.user.clerkId});
 
         if(!cart) {
+
+            const user = req.user;
+
             cart = await Cart.create({
                 user: user._id,
                 clerkId: user.clerkId,
@@ -51,7 +54,7 @@ export async function addToCart(req,res) {
        const existingItem = cart.items.find((item) => item.product.toString() === productId);
     if (existingItem) {
       // increment quantity by 1
-      const newQuantity = existingItem.quantity + 1;
+      const newQuantity = existingItem.quantity + quantity;
       if (product.stock < newQuantity) {
         return res.status(400).json({ error: "Insufficient stock" });
       }
@@ -133,7 +136,7 @@ export async function clearCart(req,res) {
         if(!cart) {
             return res.status(404).json({error: "Cart not found"});
         }
-        cart.item=[];
+        cart.items=[];
         await cart.save();
     } catch (error) {
     console.error("Error in clearCart controller:", error);
